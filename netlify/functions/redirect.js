@@ -1,0 +1,174 @@
+const { Pool } = require('pg');
+
+// Database connection
+const pool = new Pool({
+    host: 'aws-1-ap-southeast-1.pooler.supabase.com',
+    database: 'postgres',
+    user: 'postgres.vkgjvslafnshlsrrcrar',
+    password: 'Melpost123@',
+    port: 5432,
+    ssl: { rejectUnauthorized: false }
+});
+
+// Bot detection
+function isBot(userAgent) {
+    if (!userAgent) return false;
+    const ua = userAgent.toLowerCase();
+    const bots = [
+        'facebookexternalhit', 'twitterbot', 'whatsapp', 'linkedinbot',
+        'pinterest', 'slackbot', 'telegrambot', 'discordbot', 'googlebot',
+        'bingbot', 'yandex', 'duckduckgo'
+    ];
+    return bots.some(bot => ua.includes(bot));
+}
+
+exports.handler = async (event, context) => {
+    // Get slug from path
+    const path = event.path;
+    const slug = path.replace(/^\/+/, '').replace(/\/+$/, '');
+
+    // Skip if it's an API call or static asset
+    if (slug.startsWith('api/') || slug.startsWith('.netlify/') ||
+        slug.includes('.') || slug === '' || slug === 'index.html') {
+        return {
+            statusCode: 404,
+            body: 'Not found'
+        };
+    }
+
+    try {
+        // Look up the slug
+        const result = await pool.query(
+            `SELECT l.*, d.url as domain_url 
+       FROM links l 
+       JOIN domains d ON l.domain_id = d.id 
+       WHERE l.slug = $1`,
+            [slug]
+        );
+
+        if (result.rows.length === 0) {
+            return {
+                statusCode: 404,
+                headers: { 'Content-Type': 'text/html' },
+                body: '<h1>404 Not Found</h1><p>Link invalid or expired.</p>'
+            };
+        }
+
+        const link = result.rows[0];
+        let target = link.original_url;
+
+        // Ensure protocol exists
+        if (!target.match(/^https?:\/\//)) {
+            target = 'https://' + target;
+        }
+
+        const title = link.title || 'Link Preview';
+        const description = link.description || 'Click to view this link';
+        const image = link.image_url || '';
+
+        const userAgent = event.headers['user-agent'] || '';
+
+        // CLOAKING: Serve OG tags for bots
+        if (isBot(userAgent)) {
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'text/html' },
+                body: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${title}</title>
+    <meta name="description" content="${description}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="${title}">
+    <meta property="og:description" content="${description}">
+    ${image ? `<meta property="og:image" content="${image}">` : ''}
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="${title}">
+    <meta property="twitter:description" content="${description}">
+    ${image ? `<meta property="twitter:image" content="${image}">` : ''}
+</head>
+<body></body>
+</html>`
+            };
+        }
+
+        // For humans: Show waiting page with JS redirect
+        return {
+            statusCode: 200,
+            headers: {
+                'Content-Type': 'text/html',
+                'Referrer-Policy': 'no-referrer'
+            },
+            body: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
+    <title>Waiting for you...</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #111827;
+            ${image ? `background-image: url('${image}');` : ''}
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: overlay;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: -1;
+        }
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-left-color: #f97316;
+            border-radius: 50%;
+            width: 50px; height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-weight: 300;
+            letter-spacing: 1px;
+            font-size: 1.2rem;
+            margin: 0;
+            opacity: 0.9;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="loader"></div>
+    <h2>Waiting for you...</h2>
+    <script>
+        setTimeout(() => {
+            window.location.replace("${target}");
+        }, 1000);
+    </script>
+</body>
+</html>`
+        };
+
+    } catch (error) {
+        console.error('Redirect error:', error);
+        return {
+            statusCode: 500,
+            headers: { 'Content-Type': 'text/html' },
+            body: '<h1>500 Internal Server Error</h1>'
+        };
+    }
+};

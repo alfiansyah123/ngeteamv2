@@ -6,11 +6,31 @@
 [functions]
   node_bundler = "esbuild"
 
+# API endpoints -> Netlify Functions
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  from = "/api/get-domains"
+  to = "/.netlify/functions/get-domains"
   status = 200
 
+[[redirects]]
+  from = "/api/save-link"
+  to = "/.netlify/functions/save-link"
+  status = 200
+
+[[redirects]]
+  from = "/api/add-domain"
+  to = "/.netlify/functions/add-domain"
+  status = 200
+
+# Slug redirects (catch slugs BEFORE the SPA catch-all)
+# This matches any path that looks like a slug (alphanumeric, no dots)
+[[redirects]]
+  from = "/:slug"
+  to = "/.netlify/functions/redirect"
+  status = 200
+  conditions = {Path = ["^/[a-zA-Z0-9]+$"]}
+
+# SPA fallback for actual app routes
 [[redirects]]
   from = "/*"
   to = "/index.html"
