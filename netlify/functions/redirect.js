@@ -1,4 +1,6 @@
 const { Pool } = require('pg');
+const fs = require('fs');
+const path = require('path');
 
 // Database connection
 const pool = new Pool({
@@ -22,22 +24,42 @@ function isBot(userAgent) {
     return bots.some(bot => ua.includes(bot));
 }
 
-exports.handler = async (event, context) => {
-    // Get slug from path
-    const path = event.path;
-    const slug = path.replace(/^\/+/, '').replace(/\/+$/, '');
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
 
-    // Skip if it's an API call or static asset
-    if (slug.startsWith('api/') || slug.startsWith('.netlify/') ||
-        slug.includes('.') || slug === '' || slug === 'index.html') {
+exports.handler = async (event, context) => {
+    const requestPath = event.path;
+    const slug = requestPath.replace(/^\/+/, '').replace(/\/+$/, '');
+
+    // If empty path, serve index.html (homepage)
+    if (slug === '' || slug === 'index.html') {
         return {
-            statusCode: 404,
-            body: 'Not found'
+            statusCode: 200,
+            headers: { 'Content-Type': 'text/html' },
+            body: `<!DOCTYPE html>
+<html>
+<head><meta http-equiv="refresh" content="0;url=/"></head>
+<body>Redirecting...</body>
+</html>`
         };
     }
 
+    // Skip static assets (has file extension)
+    if (slug.includes('.')) {
+        return {
+            statusCode: 404,
+            body: 'Not found - static file'
+        };
+    }
+
+    // Try to find slug in database
     try {
-        // Look up the slug
         const result = await pool.query(
             `SELECT l.*, d.url as domain_url 
        FROM links l 
@@ -46,14 +68,26 @@ exports.handler = async (event, context) => {
             [slug]
         );
 
+        // If not found in DB, it's probably an app route - serve SPA
         if (result.rows.length === 0) {
+            // Return the SPA index.html for client-side routing
             return {
-                statusCode: 404,
+                statusCode: 200,
                 headers: { 'Content-Type': 'text/html' },
-                body: '<h1>404 Not Found</h1><p>Link invalid or expired.</p>'
+                body: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGE-team</title>
+    <script>window.location.href = '/';</script>
+</head>
+<body>Loading...</body>
+</html>`
             };
         }
 
+        // Found the link - handle redirect
         const link = result.rows[0];
         let target = link.original_url;
 
@@ -62,9 +96,9 @@ exports.handler = async (event, context) => {
             target = 'https://' + target;
         }
 
-        const title = link.title || 'Link Preview';
-        const description = link.description || 'Click to view this link';
-        const image = link.image_url || '';
+        const title = escapeHtml(link.title) || 'Link Preview';
+        const description = escapeHtml(link.description) || 'Click to view this link';
+        const image = escapeHtml(link.image_url) || '';
 
         const userAgent = event.headers['user-agent'] || '';
 
@@ -168,7 +202,7 @@ exports.handler = async (event, context) => {
         return {
             statusCode: 500,
             headers: { 'Content-Type': 'text/html' },
-            body: '<h1>500 Internal Server Error</h1>'
+            body: '<h1>500 Internal Server Error</h1><p>' + error.message + '</p>'
         };
     }
 };
