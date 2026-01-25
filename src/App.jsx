@@ -146,15 +146,21 @@ function App() {
             randomSlug = generateRandomSlug(16)
           }
 
+          // Pick domain - random or selected
+          let domainToUse = selectedDomain
+          if (selectedDomain === '__RANDOM__' && domains.length > 0) {
+            domainToUse = domains[Math.floor(Math.random() * domains.length)]
+          }
+
           // Auto-detect localhost for testing
-          const protocol = selectedDomain.includes('localhost') ? 'http' : 'https'
-          const generatedLink = `${protocol}://${selectedDomain}/${randomSlug}`
+          const protocol = domainToUse.includes('localhost') ? 'http' : 'https'
+          const generatedLink = `${protocol}://${domainToUse}/${randomSlug}`
 
           // Save to Database
           await saveLink({
             slug: randomSlug,
             original_url: url,
-            domain_url: selectedDomain,
+            domain_url: domainToUse,
             title: judul,
             description: deskripsi,
             image_url: imageUrl
@@ -293,11 +299,14 @@ function App() {
                 disabled={domains.length === 0}
               >
                 {domains.length > 0 ? (
-                  domains.map((domain) => (
-                    <option key={domain} value={domain}>
-                      {domain}
-                    </option>
-                  ))
+                  <>
+                    <option value="__RANDOM__">🎲 Random Domain</option>
+                    {domains.map((domain) => (
+                      <option key={domain} value={domain}>
+                        {domain}
+                      </option>
+                    ))}
+                  </>
                 ) : (
                   <option>Loading domains...</option>
                 )}
