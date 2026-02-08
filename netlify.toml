@@ -32,6 +32,11 @@
   to = "/.netlify/functions/get-recent-clicks"
   status = 200
 
+[[redirects]]
+  from = "/api/get-clicks-report"
+  to = "/.netlify/functions/get-clicks-report"
+  status = 200
+
 # Exclude static assets from function rewrite
 [[redirects]]
   from = "/assets/*"

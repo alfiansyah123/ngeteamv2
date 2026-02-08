@@ -4,6 +4,7 @@ import './App.css'
 import { fetchDomains, saveLink, addDomain } from './services/api'
 import Login from './components/Login'
 import LiveTraffic from './components/LiveTraffic'
+import Reports from './components/Reports'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -265,6 +266,12 @@ function App() {
         >
           History
         </button>
+        <button
+          className={`tab-btn ${activeTab === 'reports' ? 'active' : ''}`}
+          onClick={() => setActiveTab('reports')}
+        >
+          Reports
+        </button>
       </div>
 
       {activeTab === 'generator' ? (
@@ -460,6 +467,10 @@ function App() {
             <LiveTraffic />
           </aside>
         </div>
+      ) : activeTab === 'reports' ? (
+        <main className="main-content single-col">
+          <Reports />
+        </main>
       ) : (
         <main className="main-content single-col">
           <div className="card">

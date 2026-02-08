@@ -1,0 +1,145 @@
+.reports-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.reports-header h2 {
+    font-size: 1.5rem;
+    color: #1f2937;
+    margin: 0;
+}
+
+.period-filters {
+    display: flex;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 4px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.filter-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #4b5563;
+    transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: #1f2937;
+}
+
+.filter-btn.active {
+    background: #f97316;
+    color: white;
+    box-shadow: 0 2px 4px rgba(249, 115, 22, 0.3);
+}
+
+/* Liquid Glass Card Styling */
+.reports-card {
+    background: rgba(255, 255, 255, 0.45);
+    border-radius: 24px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+        0 8px 32px 0 rgba(31, 38, 135, 0.05),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    overflow: hidden;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.reports-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.reports-table th {
+    text-align: left;
+    padding: 16px;
+    color: #6b7280;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    white-space: nowrap;
+}
+
+.reports-table td {
+    padding: 16px;
+    color: #374151;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    vertical-align: middle;
+}
+
+.reports-table tr:last-child td {
+    border-bottom: none;
+}
+
+.reports-table tr:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.mono {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #4b5563;
+}
+
+.slug-cell {
+    color: #f97316;
+    font-weight: 500;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+}
+
+.loading-state,
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #6b7280;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .reports-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .period-filters {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .filter-btn {
+        flex: 1;
+        white-space: nowrap;
+    }
+}
