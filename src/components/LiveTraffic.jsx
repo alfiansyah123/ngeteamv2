@@ -31,31 +31,17 @@ const LiveTraffic = () => {
     };
 
     const getCountryFlag = (country) => {
-        const flags = {
-            'ID': '🇮🇩',
-            'US': '🇺🇸',
-            'GB': '🇬🇧',
-            'AU': '🇦🇺',
-            'CA': '🇨🇦',
-            'DE': '🇩🇪',
-            'FR': '🇫🇷',
-            'JP': '🇯🇵',
-            'KR': '🇰🇷',
-            'CN': '🇨🇳',
-            'IN': '🇮🇳',
-            'BR': '🇧🇷',
-            'RU': '🇷🇺',
-            'MY': '🇲🇾',
-            'SG': '🇸🇬',
-            'PH': '🇵🇭',
-            'TH': '🇹🇭',
-            'VN': '🇻🇳',
-            'NL': '🇳🇱',
-            'IT': '🇮🇹',
-            'ES': '🇪🇸',
-            'XX': '🌍'
-        };
-        return flags[country] || '🌍';
+        if (!country || country === 'XX') {
+            return <span style={{ fontSize: '1.2rem' }}>🌍</span>;
+        }
+        return (
+            <img
+                src={`https://flagcdn.com/24x18/${country.toLowerCase()}.png`}
+                alt={country}
+                style={{ width: '24px', height: '18px', borderRadius: '2px' }}
+                onError={(e) => { e.target.style.display = 'none'; }}
+            />
+        );
     };
 
     const getOSIcon = (os) => {
